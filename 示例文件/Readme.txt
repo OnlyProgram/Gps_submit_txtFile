@@ -1,0 +1,5 @@
+Meshed文件夹为网格化后的文件
+Trajectory文件夹保存待补路段文件
+SimilarArea文件夹保存相似路段文件
+AllFilled文件保存补点文件（含原始轨迹）
+All20170901_Trunk_Sort.json为20170901当天的车辆按照其坐标数排序文件
