@@ -66,7 +66,7 @@ def FilterRoute(filepath, minKilometer=0.5, maxKilometer=1, timechoose=1, Calcul
     if (Calculation == 1):
         if (timechoose == 1):
             try:
-                df = pd.read_csv(filepath, header=None, usecols=[1, 2, 3, 4, 5],names=[0,1,2,3,4])#,names=[0,1,2,3,4]
+                df = pd.read_csv(filepath, header=None, usecols=[1, 2, 3, 4, 5],names=[0,1,2,3,4],encoding='utf-8')#,names=[0,1,2,3,4]
                 if df.nunique()[1] < 5 or df.nunique()[2]< 5:
                     print("*********该车辆坐标点过少，暂不处理**********")
                     return 0
@@ -186,7 +186,7 @@ def findSimilarArea(path, trunknumber, savepath, trunkcoordinate):
     if flag !=0:
         tem = trunknumber + "SimilarAreas.txt"
         with open(os.path.join(savepath, tem), 'a') as temfile:
-            temfile.write("{}的相似区域为:".format(str(trunkcoordinate)))
+            temfile.write("{}SimilarArea:".format(str(trunkcoordinate)))
             temfile.write(str(EndResult) + "\n\n")
         print("**********路段：{}的相似区域查找完成，已保存至{}文件夹下**********".format(trunkcoordinate, savepath))
     else:
@@ -212,7 +212,7 @@ def FillTracks(Trunkpath, SingleTrunkTxt,savepath,savename,choose=1,maxpoints = 
             for line in file.readlines():  # 一行为一个路段，即此循环为补一个车辆
 
                 if line.strip():
-                    tem_list = line.strip('\n').split("的相似区域为:")
+                    tem_list = line.strip('\n').split("SimilarArea:")
                     startend = eval(tem_list[0])[0]  # 首先转换为列表，再取出起点终点坐标
                     dic = eval(tem_list[1])
                     if dic:
@@ -247,7 +247,7 @@ def FillTracks(Trunkpath, SingleTrunkTxt,savepath,savename,choose=1,maxpoints = 
                     else:
                         pass
             Fullname = savename + ".csv"
-            AllFilledpoint.to_csv(os.path.join(savepath, Fullname), header=0, index=0)
+            AllFilledpoint.to_csv(os.path.join(savepath, Fullname), header=0, index=0,encoding='utf_8_sig')
     elif choose == 0:
         pass
     else:
@@ -271,8 +271,8 @@ def FindAllRoute(AllTrunkPath, savePAth):
             NoFind.append(str(os.path.split(file)[-1]).split('.')[0])
         elif Filledresult:
             finame = str(os.path.split(file)[-1]).split('.')[0] + ".txt"
-            filpa = "H:\GPS_Data\\20170901\Top20\Top20Meshed" #
-            savep = "H:\GPS_Data\\20170901\Top20\SimilarArea"  #相似区域文件保存路径
+            #filpa = "H:\GPS_Data\\20170901\Top20\Top20Meshed" #
+            #savep = "H:\GPS_Data\\20170901\Top20\SimilarArea"  #相似区域文件保存路径
 
             with open(os.path.join(savePAth, finame), 'w') as f:
                 for num in Filledresult:
@@ -288,29 +288,30 @@ def FindAllRoute(AllTrunkPath, savePAth):
     else:pass
 
 
-"""
+
 #寻找待补路段示例：第一个参数为网格化路径，第二个参数为待补路段的文件保存路径
-FindAllRoute('H:\GPS_Data\\20170901\Top20\Meshed',
-             'H:\GPS_Data\\20170901\Top20\Trajectory')
 """
+FindAllRoute('H:\GPS_Data\\20170901\\text\Trunk0803\Meshed',
+             'H:\GPS_Data\\20170901\\text\Trunk0803\\Trajectory')
+"""
+
 
 """
 #找出相近区域示例
-filpa = "H:\GPS_Data\\20170901\Top20\Meshed"     #网格化后的文件路径
-savep = "H:\GPS_Data\\20170901\Top20\SimilarArea"    #文件保存路径  txt
-paths = findtxtpath(r'H:\GPS_Data\\20170901\Top20\\text')  #待补路段文件路径
+filpa = "H:\GPS_Data\\20170901\\text\Trunk0803\Meshed"     #网格化后的文件路径
+savep = "H:\GPS_Data\\20170901\\text\Trunk0803\SimilarArea"    #文件保存路径  txt
+paths = findtxtpath(r'H:\GPS_Data\20170901\text\Trunk0803\Trajectory')  #待补路段文件路径
 for pa in paths:
     #print(str(os.path.split(pa)[-1]).split('.')[0])
-    if str(os.path.split(pa)[-1]).split('.')[0]=="4e3dae9e-6dc6-4fe0-875d-dc29af45ab5b":
-        print("正在处理车辆：{}".format(str(os.path.split(pa)[-1]).split('.')[0]))
-        with open(pa, 'r') as file:
-            for line in file.readlines():
-                line_list = []
-                list1 = [eval(i) for i in line.strip('\n').split(',')]  # str转换为int
-                line_list.append(list1[0:4])
-                line_list.append(list1[4:])
+    print("正在处理车辆：{}".format(str(os.path.split(pa)[-1]).split('.')[0]))
+    with open(pa, 'r') as file:
+        for line in file.readlines():
+            line_list = []
+            list1 = [eval(i) for i in line.strip('\n').split(',')]  # str转换为int
+            line_list.append(list1[0:4])
+            line_list.append(list1[4:])
 
-                findSimilarArea(filpa, str(os.path.split(pa)[-1]).split('.')[0], savep, line_list)
+            findSimilarArea(filpa, str(os.path.split(pa)[-1]).split('.')[0], savep, line_list)
 """
 
 
@@ -327,5 +328,5 @@ df = pd.read_csv(os.path.join(Trunkpath,Filledcsvname),header=None,usecols=[2,3]
 df = df.reset_index(drop=True)
 df[2] = 0   #标记为原始点
 df = pd.concat([df,FilledPoints],ignore_index=True)
-df.to_csv(os.path.join('H:\GPS_Data\\20170901\Top20\AllFilled',Filledcsvname),index=0,header=0)
+df.to_csv(os.path.join('H:\GPS_Data\\20170901\Top20\AllFilled',Filledcsvname),index=0,header=0,encoding='utf_8_sig')
 """

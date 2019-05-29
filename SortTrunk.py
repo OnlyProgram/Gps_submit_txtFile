@@ -63,14 +63,14 @@ def Save_Trunk_GPS(readpath,savepath,savefilename,topname,percent=5):
     except Exception as e:
         print(e)
 
-def Get_top_trunk_list(path):
+def Get_top_trunk_list(path):  #处理txt
     """
     返回前20%车牌号列表
     :param path:  json文件,前20%车牌号json文件路径
     :return: 返回前20%车牌号列表
     """
     Trunk_list = []
-    with open(path, 'r') as file:
+    with open(path, 'r',encoding='utf-8') as file:
         strs = file.read()
         Trunk_dict = json.loads(strs)
     for key in Trunk_dict.keys():
@@ -80,10 +80,10 @@ def Get_top_trunk_list(path):
 
 #运行示例如下：
 #按坐标数排序，并提取前20%（可设定）
-reapath = "H:\GPS_Data\\20170901\\text\Trunk0803\\WBHC_20180803_PX_0.txt"
-sapath = "H:\GPS_Data\\20170901\\text\Trunk0803"
-df = pd.read_table(reapath,sep=',')
-Save_Trunk_GPS(reapath,sapath,"All20170901_Trunk_Sort","Top20Sort")
+# reapath = "H:\GPS_Data\\20170901\\text\Trunk0803\\WBHC_20180803_PX_0.txt"
+# sapath = "H:\GPS_Data\\20170901\\text\Trunk0803"
+# df = pd.read_table(reapath,sep=',')
+# Save_Trunk_GPS(reapath,sapath,"All20170901_Trunk_Sort","Top20Sort")
 #groups = df.groupby(df.iloc[:,0])
 #for group in groups:
     #print(group)

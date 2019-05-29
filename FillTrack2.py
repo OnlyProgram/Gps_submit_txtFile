@@ -145,7 +145,7 @@ def FindRouteNumber(threshold_value = 1):
                 else:pass
             Routes.append(tem_routes)
         else:pass
-    print("可分为线路类别为：{}".format(len(Routes)))
+    #print("可分为线路类别为：{}".format(len(Routes)))
     if len(Routes) > 1:
         """
         #此代码块为可视化观察轨迹分类的可靠性，后期调试完毕可删除
@@ -167,10 +167,10 @@ def FindRouteNumber(threshold_value = 1):
         Originaldf = pd.read_csv(os.path.join('H:\GPS_Data\\20170901\Top20\Meshed',Originalfilename),header=None,usecols=[2, 3], names=[0, 1])#待补车辆的原始数据
         Originaldf[2] = -1  #标记为原始点
         All_df = pd.concat([All_df,Originaldf],ignore_index=True)
-        All_df.to_csv(os.path.join('H:\GPS_Data\\20170901\Top20\classRoute', savetrunkclassfilename), index=0, header=0)
+        All_df.to_csv(os.path.join('H:\GPS_Data\\20170901\Top20\classRoute', savetrunkclassfilename), index=0, header=0,encoding='utf_8_sig')
         """
         class_max_num = 0   #记录类别中的最大轨迹数
-        print(Routes)
+        #print(Routes)
         Final_select_class = 0  #记录最终被选出的路线类别
         for class_index in range(len(Routes)):  # 遍历线路类别，找出含有轨迹最多数目的类别
             if len(Routes[class_index]) > class_max_num:
@@ -182,8 +182,8 @@ def FindRouteNumber(threshold_value = 1):
 
 
 #以下为运行示例，修改文件名即可
-meshed_path = "H:\GPS_Data\\20170901\Top20\Meshed"   #前20%车辆网格化的文件路径
-FilledList = findtxtpath("H:\GPS_Data\\20170901\Top20\SimilarArea")  #相似路段文件路径
+meshed_path = "H:\GPS_Data\\20170901\\text\Trunk0803\Meshed"   #前20%车辆网格化的文件路径
+FilledList = findtxtpath("H:\GPS_Data\\20170901\\text\Trunk0803\SimilarArea")  #相似路段文件路径
 for singleFile in FilledList:
     trunknum = str(os.path.split(singleFile)[-1]).split('SimilarAreas.txt')[0] # 待补车辆车牌号
 
@@ -191,15 +191,15 @@ for singleFile in FilledList:
         AllFilledpoint = pd.DataFrame(None)  # 记录所有路段的补充点
         for line in file.readlines():  # 一行为一个路段，即此循环为补一个车辆
             if line.strip():
-                tem_list = line.strip('\n').split("的相似区域为:")
+                tem_list = line.strip('\n').split("SimilarArea:")
                 startend = eval(tem_list[0])[0]  # 首先转换为列表，再取出起点终点坐标
                 dic = eval(tem_list[1])
-                print("************路段{}的补充路段有以下几类路线可补*************".format(tem_list[0]))
-                print(dic)
+                #print("************路段{}的补充路段有以下几类路线可补*************".format(tem_list[0]))
+                #print(dic)
                 Candidate_Trunk_num, class_flag = FindRouteNumber()  # 接受被选中的车辆列表,class_flag为Ttrue代表轨迹分为两类以上
                 if class_flag:
                     new_dic = {}
-                    print(Candidate_Trunk_num)
+                    #print(Candidate_Trunk_num)
                     for key, value in dic.items():
                         if key in Candidate_Trunk_num:
                             new_dic[key] = value
@@ -207,9 +207,10 @@ for singleFile in FilledList:
                             pass
                     del dic
                     dic = new_dic
-                    print(dic)
+                    #print(dic)
                 else:
-                    print(dic)
+                    #print(dic)
+                    pass
                 RoutePoint = pd.DataFrame(None)  # 路段的所有补点
                 order_key_dic = {}
                 for key in dic.keys():  # 此循环为补充一个路段
@@ -239,12 +240,12 @@ for singleFile in FilledList:
                 # print(RoutePoint)
                 AllFilledpoint = pd.concat([AllFilledpoint, RoutePoint], ignore_index=True)
         Originalfilename = trunknum + ".csv"
-        df = pd.read_csv(os.path.join('H:\GPS_Data\\20170901\Top20\Meshed', Originalfilename), header=None,
-                         usecols=[2, 3], names=[0, 1])  # 待补车辆的原始数据
+        df = pd.read_csv(os.path.join(meshed_path, Originalfilename), header=None,
+                         usecols=[2, 3], names=[0, 1],encoding='utf_8_sig')  # 待补车辆的原始数据
         df = df.reset_index(drop=True)
         df[2] = 0  # 标记为原始点
         df = pd.concat([df, AllFilledpoint], ignore_index=True)
         Filledcsvname = trunknum + ".csv"
-        df.to_csv(os.path.join('H:\GPS_Data\\20170901\Top20\AllFilled\\SimilarFilled', Filledcsvname), index=0,
-                  header=0)  # 补点文件和原始文件合并后保存路径
+        df.to_csv(os.path.join(r'H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\SimilarFilled', Filledcsvname), index=0,
+                  header=0,encoding='utf_8_sig')  # 补点文件和原始文件合并后保存路径
 
