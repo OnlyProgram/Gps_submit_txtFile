@@ -167,6 +167,8 @@ def findSimilarArea(path, trunknumber, savepath, trunkcoordinate):
     [[116.14683500000001, 40.091654999999996, 116.144581, 40.086686], [1147, 1092, 1145, 1087]]
     :return: 无返回 存储
     """
+    if not os.path.isdir(savepath):
+        os.mkdir(savepath)
     flag = 0
     list_dir = findcsvpath(path)  # 获取当前文件夹下所有文件名
     EndResult = {}
@@ -187,7 +189,7 @@ def findSimilarArea(path, trunknumber, savepath, trunkcoordinate):
         tem = trunknumber + "SimilarAreas.txt"
         with open(os.path.join(savepath, tem), 'a') as temfile:
             temfile.write("{}SimilarArea:".format(str(trunkcoordinate)))
-            temfile.write(str(EndResult) + "\n\n")
+            temfile.write(str(EndResult) + "\n")
         print("**********路段：{}的相似区域查找完成，已保存至{}文件夹下**********".format(trunkcoordinate, savepath))
     else:
         print("**********未找到相似区域**********")
@@ -261,6 +263,8 @@ def FindAllRoute(AllTrunkPath, savePAth):
     :param savePAth: 结果保存路径
     :return: 无返回
     """
+    if not os.path.isdir(savePAth):
+        os.mkdir(savePAth)
     list_dir = findcsvpath(AllTrunkPath)
     NoFind = []  # 记录未查找待补路段的车牌号
     for file in list_dir:
@@ -289,18 +293,19 @@ def FindAllRoute(AllTrunkPath, savePAth):
 
 
 
-#寻找待补路段示例：第一个参数为网格化路径，第二个参数为待补路段的文件保存路径
+#寻找待补路段示例：第一个参数为网格化路径（待处理车辆），第二个参数为待补路段的文件保存路径
 """
-FindAllRoute('H:\GPS_Data\\20170901\\text\Trunk0803\Meshed',
-             'H:\GPS_Data\\20170901\\text\Trunk0803\\Trajectory')
+FindAllRoute('E:\\20190524\Trunk0803\Meshed',
+             'E:\\20190524\Trunk0803\Trajectory')
 """
 
 
 """
 #找出相近区域示例
-filpa = "H:\GPS_Data\\20170901\\text\Trunk0803\Meshed"     #网格化后的文件路径
-savep = "H:\GPS_Data\\20170901\\text\Trunk0803\SimilarArea"    #文件保存路径  txt
-paths = findtxtpath(r'H:\GPS_Data\20170901\text\Trunk0803\Trajectory')  #待补路段文件路径
+#filpa = "E:\\20190524\Trunk0803\Meshed"     #网格化后的文件路径，后期有优质补点车辆，可将其作为补点车辆，而不必每次更换
+filpa = "E:\\20190524\Data\Meshed"   #20170901的网格化数据  由于车辆多，根据此找到相似区域
+savep = "E:\\20190524\Trunk0803\SimilarArea"    #文件保存路径  txt
+paths = findtxtpath(r'E:\\20190524\Trunk0803\Trajectory')  #待补路段文件路径
 for pa in paths:
     #print(str(os.path.split(pa)[-1]).split('.')[0])
     print("正在处理车辆：{}".format(str(os.path.split(pa)[-1]).split('.')[0]))
@@ -312,12 +317,12 @@ for pa in paths:
             line_list.append(list1[4:])
 
             findSimilarArea(filpa, str(os.path.split(pa)[-1]).split('.')[0], savep, line_list)
+
+
 """
 
-
-
 """
-#补点示例
+#补点示例,单车辆迭代补点
 Trunkpath = 'H:\GPS_Data\\20170901\Top20\Meshed'
 FilledSavePath = 'H:\GPS_Data\\20170901\Top20\FilledRoute'
 SaveFilename = 'text'

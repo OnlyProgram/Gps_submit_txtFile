@@ -15,6 +15,8 @@ def CombineCsv(csvfilespath,savepath,combinename):
     :param combinename: 合并后的文件名
     :return:
     """
+    if not os.path.isdir(savepath):
+        os.mkdir(savepath)
     #csvx_list = glob.glob('H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\SimilarFilled\*.csv')
     csvx_list = glob.glob(os.path.join(csvfilespath,'*.csv'))
     csvfilenum = len(csvx_list)
@@ -28,5 +30,5 @@ def CombineCsv(csvfilespath,savepath,combinename):
                 f.write(fr)
             pbar.update(1)
 #示例
-#CombineCsv("H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\SimilarFilled",
-           #"H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\\Combine","conbine")
+CombineCsv("H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\SimilarFilled",
+           "H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\\Combine","conbine")

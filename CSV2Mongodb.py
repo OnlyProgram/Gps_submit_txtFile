@@ -46,7 +46,6 @@ def Insert(insertpath,collection):
     # 'lat'],encoding='utf-8')  # 分块读取 每一块200万条数据,如果不加header=None 第一行会被当做索引，而不被处理
     for df in chunker:
         for index, row in df.iterrows():
-
             try:
                 row['TrunkNumber'] = str(row['TrunkNumber'])
                 row['Time'] = str(datetime.datetime.strptime(str(row['Time']), '%Y%m%d%H%M%S'))
@@ -62,6 +61,7 @@ def Insert(insertpath,collection):
             except Exception as e:
                 with open(os.path.join(PROJECT_ROOT,"To qdatabase.log"), 'a') as file:
                     file.write("第{}条数据插入数据库出错：".format(counts+1)+str(e) +"\n")
+    conn.close()
     print('成功添加了' + str(counts) + '条数据 ')
 def Inquire(Trunknumber_lists,savepath,collection):
     myset = db[collection]
@@ -84,6 +84,7 @@ def Inquire(Trunknumber_lists,savepath,collection):
                 del result['_id']
                 dict_writer.writerow(result)
         print("处理第{}辆车数据时间消耗为：{}".format(flag,datetime.timedelta(seconds=(time.time()-starttime))))
+    conn.close()
 
 #运行示例
 #Insert("H:\GPS_Data\\20170901\\text\Trunk0803\\WBHC_20180803_PX_0.txt","WBHC_20180803_PX_0")

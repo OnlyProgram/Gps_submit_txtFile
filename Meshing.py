@@ -22,7 +22,9 @@ def findcsv(path):
             if de_path.endswith(".csv"):
                 ret.append(de_path)
     return ret
-def Meshing(filepath,savepath,filename):
+def Meshed(filepath,savepath,filename):
+    if not os.path.isdir(savepath):
+        os.mkdir(savepath)
     df = pd.read_csv(filepath, header=None,
                      usecols=[0, 1, 2, 3],encoding='utf-8')
     if df.nunique()[1] < 5 or df.nunique()[2] < 5:
@@ -53,12 +55,11 @@ def Meshing(filepath,savepath,filename):
 
 """
 #使用举例，同时网格化多个车辆
-spath = "H:\GPS_Data\\20170901\\text\Trunk0803\Meshed"  #保存路径
-list_dir = findcsv('H:\GPS_Data\\20170901\\text\Trunk0803\Top20Trunks')  #提取的20%文件路径
-#spath = "D:\postgraduate-2017-2020\Data_set\GPS\Top200w\Data_gridding" #文件保存路径
+spath = "E:\\20190524\Trunk0803\Meshed"  #保存路径
+list_dir = findcsv('E:\\20190524\Trunk0803\Top20Trunks')  #提取的20%文件路径
 for file in list_dir:
     print(file)
     temname = (str(os.path.split(file)[-1]).split('.')[0])  #提取文件名
-    Meshing(file,spath,temname)
+    Meshed(file,spath,temname)
 
 """

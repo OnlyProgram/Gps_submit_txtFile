@@ -19,6 +19,7 @@ percent:提取比例，默认为5，提取的是20%，可更改
 import pandas as pd
 import json
 import os
+from collections import OrderedDict
 
 def Save_Trunk_GPS(readpath,savepath,savefilename,topname,percent=5):
     """
@@ -44,9 +45,11 @@ def Save_Trunk_GPS(readpath,savepath,savefilename,topname,percent=5):
                 else:
                     truck_dict[num] += 1
         trunk_lists = sorted(truck_dict.items(), key=lambda x: x[1], reverse=True)
-        for l in trunk_lists[:int(len(trunk_lists) / percent)]:
-            dictdata[l[0]] = l[1]
-        dt = dict(trunk_lists)
+        #print(trunk_lists)
+        # for l in trunk_lists[:int(len(trunk_lists) / percent)]:
+        #     dictdata[l[0]] = l[1]
+        dictdata = OrderedDict(trunk_lists[:int(len(trunk_lists) / percent)])
+        dt = OrderedDict(trunk_lists)
         if not os.path.exists(savepath):
             os.makedirs(savepath)
         fname1 = savefilename + ".json"
@@ -80,10 +83,6 @@ def Get_top_trunk_list(path):  #处理txt
 
 #运行示例如下：
 #按坐标数排序，并提取前20%（可设定）
-# reapath = "H:\GPS_Data\\20170901\\text\Trunk0803\\WBHC_20180803_PX_0.txt"
-# sapath = "H:\GPS_Data\\20170901\\text\Trunk0803"
-# df = pd.read_table(reapath,sep=',')
+# reapath = "E:\\20190524\Trunk0803\\LSHY_20180803_PX_1.txt"
+# sapath = "E:\\20190524\Trunk0803"
 # Save_Trunk_GPS(reapath,sapath,"All20170901_Trunk_Sort","Top20Sort")
-#groups = df.groupby(df.iloc[:,0])
-#for group in groups:
-    #print(group)

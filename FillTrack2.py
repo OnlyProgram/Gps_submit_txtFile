@@ -10,7 +10,7 @@
 # @File    : FilledRoute_text.py
 # @Software: PyCharm
 """
-此文件为轨迹分类的补点策略，并完整生成补点文件（完整轨迹）
+此文件为轨迹分类的补点策略（投票补点），并完整生成补点文件（完整轨迹）
 最下方代码块为运行示例
 """
 from functools import reduce
@@ -82,7 +82,7 @@ def Trajectory_Similar(tra1,tra2):
     distance2_mean = np.array(distance2).mean()
     return max(distance1_mean,distance2_mean)
 
-def FindAllRouteSimilar(dic):
+def FindAllRouteSimilar(dic,meshed_path):
     #Alldf = pd.DataFrame(None)
     Similarity = {}
     for key in dic.keys():
@@ -111,7 +111,7 @@ def FindAllRouteSimilar(dic):
         Similarity[key] = tem_dic
     return Similarity  #返回所有此路段相似路段的相似度字典，
 
-def FindRouteNumber(threshold_value = 1):
+def FindRouteNumber(dic,meshedpath,threshold_value = 1):
     """
     :param dic 待补路段字典
     :param trunknum 待补车辆车牌号
@@ -122,7 +122,7 @@ def FindRouteNumber(threshold_value = 1):
     为几类线路并统计出每类路线含有几条线路
     :return:返回被选中的车辆列表
     """
-    AllSimilar = FindAllRouteSimilar(dic)  #记录所有补路段的相互相似程度
+    AllSimilar = FindAllRouteSimilar(dic,meshedpath)  #记录所有补路段的相互相似程度
     #print(AllSimilar)
     Routes = []  #存储路线，格式为[[]],一类为一个子列表
     key_lis = list(AllSimilar.keys())
@@ -180,72 +180,84 @@ def FindRouteNumber(threshold_value = 1):
     else:
         return Routes[0],False
 
+def FinalFill(meshed_path,SimilarPath,filledsavepath):
+    if not os.path.isdir(filledsavepath):
+        os.mkdir(filledsavepath)
+    FilledList = findtxtpath(SimilarPath)
+    for singleFile in FilledList:
+        trunknum = str(os.path.split(singleFile)[-1]).split('SimilarAreas.txt')[0]  # 待补车辆车牌号
 
-#以下为运行示例，修改文件名即可
-meshed_path = "H:\GPS_Data\\20170901\\text\Trunk0803\Meshed"   #前20%车辆网格化的文件路径
-FilledList = findtxtpath("H:\GPS_Data\\20170901\\text\Trunk0803\SimilarArea")  #相似路段文件路径
-for singleFile in FilledList:
-    trunknum = str(os.path.split(singleFile)[-1]).split('SimilarAreas.txt')[0] # 待补车辆车牌号
+        with open(singleFile, 'r') as file:
+            AllFilledpoint = pd.DataFrame(None)  # 记录所有路段的补充点
+            for line in file.readlines():  # 一行为一个路段，即此循环为补一个车辆
+                if line.strip():
+                    tem_list = line.strip('\n').split("SimilarArea:")
+                    startend = eval(tem_list[0])[0]  # 首先转换为列表，再取出起点终点坐标
+                    dic = eval(tem_list[1])
+                    # print("************路段{}的补充路段有以下几类路线可补*************".format(tem_list[0]))
+                    # print(dic)
+                    Candidate_Trunk_num, class_flag = FindRouteNumber(dic,meshed_path)  # 接受被选中的车辆列表,class_flag为Ttrue代表轨迹分为两类以上
+                    if class_flag:
+                        new_dic = {}
+                        # print(Candidate_Trunk_num)
+                        for key, value in dic.items():
+                            if key in Candidate_Trunk_num:
+                                new_dic[key] = value
+                            else:
+                                pass
+                        del dic
+                        dic = new_dic
+                        # print(dic)
+                    else:
+                        # print(dic)
+                        pass
+                    RoutePoint = pd.DataFrame(None)  # 路段的所有补点
+                    order_key_dic = {}
+                    for key in dic.keys():  # 此循环为补充一个路段
+                        order_key_dic[key] = dic[key][2][1] - dic[key][2][0] + 1  # 被选中的相似区域坐标数
 
-    with open(singleFile, 'r') as file:
-        AllFilledpoint = pd.DataFrame(None)  # 记录所有路段的补充点
-        for line in file.readlines():  # 一行为一个路段，即此循环为补一个车辆
-            if line.strip():
-                tem_list = line.strip('\n').split("SimilarArea:")
-                startend = eval(tem_list[0])[0]  # 首先转换为列表，再取出起点终点坐标
-                dic = eval(tem_list[1])
-                #print("************路段{}的补充路段有以下几类路线可补*************".format(tem_list[0]))
-                #print(dic)
-                Candidate_Trunk_num, class_flag = FindRouteNumber()  # 接受被选中的车辆列表,class_flag为Ttrue代表轨迹分为两类以上
-                if class_flag:
-                    new_dic = {}
-                    #print(Candidate_Trunk_num)
-                    for key, value in dic.items():
-                        if key in Candidate_Trunk_num:
-                            new_dic[key] = value
+                    order_key_dic = dict(sorted(order_key_dic.items(), key=lambda x: x[1], reverse=True))  # 降序
+                    # 开始迭代补点
+                    totalFillPoints = 0
+                    for seckey in order_key_dic.keys():
+                        totalFillPoints += order_key_dic[seckey]
+                        tem_num = seckey
+                        csvfile = tem_num + ".csv"
+                        singleTrunkpath = os.path.join(meshed_path, csvfile)  # 打开补点文件
+                        df = pd.read_csv(singleTrunkpath, header=None, usecols=[2, 3], names=[0, 1])  # 读经纬度
+                        df = df.iloc[dic[tem_num][2][0]:dic[tem_num][2][1] + 1, :]  # 一个路段的补点
+                        RoutePoint = pd.concat([RoutePoint, df], ignore_index=True)
+                        if totalFillPoints >= 10:  # 10为阈值   0.5-1公里之间补点数要大于10
+                            break
                         else:
                             pass
-                    del dic
-                    dic = new_dic
-                    #print(dic)
-                else:
-                    #print(dic)
-                    pass
-                RoutePoint = pd.DataFrame(None)  # 路段的所有补点
-                order_key_dic = {}
-                for key in dic.keys():  # 此循环为补充一个路段
-                    order_key_dic[key] = dic[key][2][1] - dic[key][2][0] + 1  # 被选中的相似区域坐标数
+                    # print(RoutePoint)
+                    RoutePoint = RoutePoint.reset_index(drop=True)  # 重置索引,并删除之前的索引
+                    RoutePoint[2] = 2  # 标记  2 表示补充点
+                    RoutePoint.loc[RoutePoint.shape[0]] = [startend[0], startend[1],
+                                                           1]  # 待补路段起点终点标记  # 加入路段起始坐标  标记为1 代表起点终点坐标
+                    RoutePoint.loc[RoutePoint.shape[0]] = [startend[2], startend[3], 1]
+                    # print(RoutePoint)
+                    AllFilledpoint = pd.concat([AllFilledpoint, RoutePoint], ignore_index=True)
+            Originalfilename = trunknum + ".csv"
+            df = pd.read_csv(os.path.join(meshed_path, Originalfilename), header=None,
+                             usecols=[0,1,2, 3], names=[0, 1,2,3], encoding='utf_8_sig')  # 待补车辆的原始数据
+            df = df.reset_index(drop=True)
+            df[4] = 0  # 标记为原始点
+            AllFilledpoint.insert(0,3,0)  #插入列
+            AllFilledpoint.insert(0,4, 0)  #插入列
+            AllFilledpoint.columns = [0,1,2,3,4]
+            df = pd.concat([df, AllFilledpoint], ignore_index=True)
+            #print(AllFilledpoint.head())
+            Filledcsvname = trunknum + ".csv"
+            df.to_csv(os.path.join(filledsavepath, Filledcsvname), index=0,
+                      header=0, encoding='utf_8_sig')  # 补点文件和原始文件合并后保存路径
 
-                order_key_dic = dict(sorted(order_key_dic.items(), key=lambda x: x[1], reverse=True))  # 降序
-                # 开始迭代补点
-                totalFillPoints = 0
-                for seckey in order_key_dic.keys():
-                    totalFillPoints += order_key_dic[seckey]
-                    tem_num = seckey
-                    csvfile = tem_num + ".csv"
-                    singleTrunkpath = os.path.join(meshed_path, csvfile)  # 打开补点文件
-                    df = pd.read_csv(singleTrunkpath, header=None, usecols=[2, 3], names=[0, 1])  # 读经纬度
-                    df = df.iloc[dic[tem_num][2][0]:dic[tem_num][2][1] + 1, :]  # 一个路段的补点
-                    RoutePoint = pd.concat([RoutePoint, df], ignore_index=True)
-                    if totalFillPoints >= 10:  # 10为阈值   0.5-1公里之间补点数要大于10
-                        break
-                    else:
-                        pass
-                # print(RoutePoint)
-                RoutePoint = RoutePoint.reset_index(drop=True)  # 重置索引,并删除之前的索引
-                RoutePoint[2] = 2  # 标记  2 表示补充点
-                RoutePoint.loc[RoutePoint.shape[0]] = [startend[0], startend[1],
-                                                       1]  # 待补路段起点终点标记  # 加入路段起始坐标  标记为1 代表起点终点坐标
-                RoutePoint.loc[RoutePoint.shape[0]] = [startend[2], startend[3], 1]
-                # print(RoutePoint)
-                AllFilledpoint = pd.concat([AllFilledpoint, RoutePoint], ignore_index=True)
-        Originalfilename = trunknum + ".csv"
-        df = pd.read_csv(os.path.join(meshed_path, Originalfilename), header=None,
-                         usecols=[2, 3], names=[0, 1],encoding='utf_8_sig')  # 待补车辆的原始数据
-        df = df.reset_index(drop=True)
-        df[2] = 0  # 标记为原始点
-        df = pd.concat([df, AllFilledpoint], ignore_index=True)
-        Filledcsvname = trunknum + ".csv"
-        df.to_csv(os.path.join(r'H:\GPS_Data\\20170901\\text\Trunk0803\AllFilled\SimilarFilled', Filledcsvname), index=0,
-                  header=0,encoding='utf_8_sig')  # 补点文件和原始文件合并后保存路径
 
+
+"""
+meshed_path = "E:\\20190524\Trunk0803\Meshed"  # 前20%车辆网格化的文件路径
+SimilarPath= "E:\\20190524\Trunk0803\SimilarArea"# 相似路段文件路径
+savefilledPath = "E:\\20190524\Trunk0803\AllFilled\SimilarFilled"
+FinalFill(meshed_path,SimilarPath,savefilledPath)
+"""
